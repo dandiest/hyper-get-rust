@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::fs::OpenOptions;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt, SeekFrom};
 
-fn inputs() -> String {
+fn inputs() -> String {                                                            /// Input function used to avoid code repetition
     let mut buffer = String::new();
     match io::stdin().read_line(&mut buffer) {
         Ok(_) => buffer.trim().to_string(),
@@ -17,24 +17,24 @@ fn inputs() -> String {
     }
 }
 
-async fn get_file_size(url: &str) -> Result<u64, Box<dyn std::error::Error>> {
+async fn get_file_size(url: &str) -> Result<u64, Box<dyn std::error::Error>> {      /// Fetches the total size of the remote file using a HEAD request.
     let client = Client::new();
     let url = url;
     let response = client.head(url).send().await?;
     let c_len = response.headers().get(CONTENT_LENGTH);
 
-    if let Some(value) = c_len {
+    if let Some(value) = c_len {                                                     /// Downloads a specific byte range of the file and writes it to the corresponding offset on disk.       
         let text = value.to_str()?;
         let real_value: u64 = text.parse::<u64>()?;
         println!("Real content length: {:?}", value);
         Ok(real_value)
-    } else {
+    } else {                                                                          // Else, it returns an error
         Err("Content length not found.".into())
     }
 }
 
-async fn download_apart(
-    url: String,
+async fn download_apart(                                                              // An asynchronous function that allows you to download a file via a URL much faster than from a browser,
+    url: String,                                                                      // dividing the download into multiple parts.
     start: u64,
     end: u64,
     path: Arc<String>,
@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let end = if i == n_threads - 1 {
             total - 1
         } else {
-            start as u64 + slice_weight - 1
+            start + slice_weight - 1
         };
         let url_clone = url_input.to_string();
         let path_clone = Arc::clone(&path_arc);
