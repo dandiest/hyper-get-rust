@@ -6,7 +6,8 @@ use std::sync::Arc;
 use tokio::fs::OpenOptions;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt, SeekFrom};
 
-fn inputs() -> String {                                                            /// Input function used to avoid code repetition
+/// Standardizes user input by trimming whitespace and handling read errors.
+fn inputs() -> String {                                                           
     let mut buffer = String::new();
     match io::stdin().read_line(&mut buffer) {
         Ok(_) => buffer.trim().to_string(),
@@ -17,37 +18,43 @@ fn inputs() -> String {                                                         
     }
 }
 
-async fn get_file_size(url: &str) -> Result<u64, Box<dyn std::error::Error>> {      /// Fetches the total size of the remote file using a HEAD request.
+/// Retrieves the file size via an HTTP HEAD request to avoid downloading the body.
+async fn get_file_size(url: &str) -> Result<u64, Box<dyn std::error::Error>> {      
     let client = Client::new();
     let url = url;
     let response = client.head(url).send().await?;
+    
+    // Extract Content-Length header and parse it as u64
     let c_len = response.headers().get(CONTENT_LENGTH);
 
-    if let Some(value) = c_len {                                                     /// Downloads a specific byte range of the file and writes it to the corresponding offset on disk.       
+    if let Some(value) = c_len {                                                    
         let text = value.to_str()?;
         let real_value: u64 = text.parse::<u64>()?;
         println!("Real content length: {:?}", value);
         Ok(real_value)
-    } else {                                                                          // Else, it returns an error
+    } else {                                                                          
         Err("Content length not found.".into())
     }
 }
 
-async fn download_apart(                                                              // An asynchronous function that allows you to download a file via a URL much faster than from a browser,
-    url: String,                                                                      // dividing the download into multiple parts.
+/// Downloads a specific byte range and writes it to the correct position in the file.
+async fn download_apart(                                                              
+    url: String,                                                                      
     start: u64,
     end: u64,
     path: Arc<String>,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let client = reqwest::Client::new();
     let range_header = format!("bytes={}-{}", start, end);
-
+    
+    // Request only the specified range
     let response = client.get(url).header("Range", range_header).send().await?;
-
     let data = response.bytes().await?;
-
+    
+    // Open file with write permissions; path is wrapped in Arc for thread-safety
     let mut file = OpenOptions::new().write(true).open(&*path).await?;
-
+    
+    // Seek to the correct offset before writing to ensure data integrity
     file.seek(SeekFrom::Start(start)).await?;
     file.write_all(&data).await?;
 
@@ -55,7 +62,7 @@ async fn download_apart(                                                        
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {           
     println!("Please, insert the url.");
     let url_input = inputs();
     println!("How many threads do you want to use?");
@@ -84,9 +91,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             valid_name.to_string()
         }
     };
-
+    
+    // Share ownership of the path string across all spawned tasks
     let path_arc = Arc::new(path);
-
+    
+    // Pre-allocate the file on disk to prevent fragmentation
     let first_file = tokio::fs::File::create(&*path_arc).await?;
     first_file.set_len(total).await?;
 
@@ -100,6 +109,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         };
         let url_clone = url_input.to_string();
         let path_clone = Arc::clone(&path_arc);
+        
+        // Spawn independent asynchronous tasks for parallel downloading
         let handle = tokio::spawn(async move {
             let download = download_apart(url_clone, start as u64, end, path_clone).await;
             match download {
@@ -114,7 +125,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         handles.push(handle);
     }
-
+    
+    // Wait for all parallel tasks to complete
     for h in handles {
         h.await?;
     }
