@@ -1,3 +1,3 @@
-Makefile linguist-documentation=true
-Makefile linguist-vendored=true
-Makefile linguist-detectable=false
+Makefile linguist-vendored
+GNUmakefile linguist-vendored
+**/Makefile linguist-vendored
