@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tokio::fs::OpenOptions;
 use tokio::io::{AsyncSeekExt, AsyncWriteExt, SeekFrom};
 
-/// Standardizes user input by trimming whitespace and handling read errors.
+/// Standardizes user input by trimming whitespace and handling read errors. 
 fn inputs() -> String {                                                           
     let mut buffer = String::new();
     match io::stdin().read_line(&mut buffer) {
@@ -134,3 +134,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Download successfully completed.");
     Ok(())
 }
+
