@@ -31,8 +31,6 @@ async fn get_file_size(url: &str) -> Result<u64, Box<dyn std::error::Error>> {
     // Attempt 1: HEAD request with extra headers
     let response = client.head(url).send().await?;
 
-    
-
     if response.status().is_success() {
         if let Some(value) = response.headers().get(http::header::CONTENT_LENGTH) {
             return Ok(value.to_str()?.parse::<u64>()?);
