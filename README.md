@@ -41,7 +41,35 @@ This repository is a cornerstone of my **Personal Apprenticeship** in Rust.
 2. Build and run:
     ```bash
     cargo run
-    ```
+    
+ ---
+    
+## ⚠️ Troubleshooting & Compatibility
+
+Multi-threaded downloading relies on the server's cooperation. Here is how Hyper Get handles common web hurdles:
+Error 403 (Forbidden)
+
+    Root Cause: Server-side Bot Protection.
+
+    Solution: Hyper Get implements professional User-Agent and Accept headers to mimic browser behavior and bypass basic security filters.
+
+SSL/TLS Error
+
+    Root Cause: System Clock Mismatch or invalid certificates.
+
+    Solution: The engine uses native-tls for OS-level validation. Ensure your system clock is synchronized to prevent certificate expiration errors.
+
+Incomplete Message
+
+    Root Cause: Instant connection closure when requesting 0 bytes.
+
+    Solution: We use a Range: bytes=0-1 fallback. This keeps the pipe open long enough to extract metadata without triggering a server-side reset.
+
+Size Not Found
+
+    Root Cause: Missing Ranged Support.
+
+    Solution: If a server doesn't support Range headers, multi-threading is technically impossible. Hyper Get identifies this early to prevent corrupted downloads.
 
 ## ⚖️ License & Copyright
 
