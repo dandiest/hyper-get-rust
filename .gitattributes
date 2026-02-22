@@ -1,6 +1,0 @@
-Makefile linguist-vendored
-GNUmakefile linguist-vendored
-**/Makefile linguist-vendored
-
-# Ignore Makefile in GitHub language stats
-Makefile linguist-generated=true
