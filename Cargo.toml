@@ -7,3 +7,4 @@ edition = "2024"
 reqwest = { version = "0.11", features = ["json", "native-tls"] }
 tokio = { version = "1", features = ["full"] }
 http = "0.2"
+indicatif = "0.17"

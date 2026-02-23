@@ -89,7 +89,10 @@ async fn download_apart(
 
     // Request only the specified range
     let response = client.get(url).header("Range", range_header).send().await?;
-    let data = response.bytes().await?;
+    let data = response
+        .bytes()
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
 
     // Open file with write permissions; path is wrapped in Arc for thread-safety
     let mut file = OpenOptions::new().write(true).open(&*path).await?;
